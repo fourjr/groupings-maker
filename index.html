@@ -12,9 +12,24 @@
     <h2>Groupings Maker</h2>
     <div class="main-div">
         <span class="title">CSV Input</span>
-        <textarea id="input" autocomplete="off" data-gramm_editor="false"></textarea>
-        <div class="small-buttons">
-            <button type="button" onclick="fillConfigDropdown()" style="display:block">Get configuration options</button>
+        <input type="file" name="File Upload" id="txtFileUpload" accept=".csv" autocomplete="off" onchange="parseFileUpload(this.files[0])">
+        <!-- <textarea id="input" autocomplete="off" data-gramm_editor="false"></textarea> -->
+        <div class="new-section">
+            <div class="div-table">
+                <table id="data-table"></table>
+            </div>
+        </div>
+        <div class="small-buttons" id="div-after-csv">
+            <div class="small-buttons">
+                <button type="button" onclick="addRow()" style="display:block">Add Row</button>
+            </div>
+            <div class="small-buttons">
+                <input type="number" id="remove-row" autocomplete="off" min="1"></input>
+                <button type="button" onclick="removeRow()">Remove Row</button>
+            </div>
+            <div class="small-buttons">
+                <button type="button" onclick="fillConfigDropdown()" style="display:block">Get configuration options</button>
+            </div>
         </div>
     </div>
     <div class="main-div" id="div-config">
@@ -29,7 +44,7 @@
         </div>
         <div class="small-buttons">
             <span>Number of groups:</span>
-            <input type="number" id="no-of-group" value="8" autocomplete="off"></input>
+            <input type="number" id="no-of-group" value="8" autocomplete="off" min="1"></input>
         </div>
         <div class="small-buttons">
             <button type="button" onclick="parseGroupings()" style="display:block">Run</button>

@@ -34,6 +34,14 @@ textarea {
     overflow-y: auto;
 }
 
+#div-table {
+    display: none;
+}
+
+#div-after-csv {
+    display: none;
+}
+
 table {
     border-collapse: collapse;
     float: left;
@@ -50,6 +58,10 @@ table, th, td {
     border: 1px solid black;
     font-size: 14px;
     background: white;
+}
+
+th, td {
+    height: 2em;
 }
 
 thead {
