@@ -12,7 +12,17 @@
     <h2>Groupings Maker</h2>
     <div class="main-div">
         <a class="title" href="https://www.solveyourtech.com/save-csv-google-sheets/">CSV Input</a>
-        <input type="file" name="File Upload" id="txtFileUpload" accept=".csv" autocomplete="off" onchange="parseFileUpload(this.files[0])">
+        <div id="file-upload">
+            <div class="small-buttons">
+                <input type="file" id="txtFileUpload" accept=".csv" autocomplete="off" onchange="parseFileUpload(this.files[0])">
+            </div>
+            <div class="small-buttons">
+                <button type="button" onclick="example(0)">Example File</button>
+            </div>
+            <div class="small-buttons">
+                <button type="button" onclick="example(1)">Blank File</button>
+            </div>
+        </div>
         <!-- <textarea id="input" autocomplete="off" data-gramm_editor="false"></textarea> -->
         <div class="new-section">
             <div class="div-table">

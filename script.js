@@ -2,6 +2,62 @@ var splitCount = 0
 var finalcsv
 var csvData
 
+var examples = [
+`Name,Class,Favorite Word
+Laronda Muto,D,heir
+Catrice Mojica,B,absorption
+Rachele Senter,D,heir
+Ruthie Holm,C,direction
+Charity Munger,D,direction
+Julene Petrosino,A,direction
+Torrie Dossantos,E,absorption
+Delaine Wetherell,B,absorption
+Leta Cinnamon,E,heir
+Wally Bode,A,market
+Verda Scroggs,A,heir
+Michelle Celestin,D,heir
+Preston Desper,C,statement
+Orlando Wilker,D,direction
+Stephnie Clink,B,absorption
+Garland Kelch,D,absorption
+Garry Creek,D,absorption
+Chung Bonds,B,absorption
+Obdulia Porche,E,direction
+Ettie Saner,E,market
+Shannan Byron,C,market
+Trent Capp,E,direction
+Zackary Beer,D,direction
+Jessika Polite,A,market
+Magnolia Daddario,C,heir
+Stanford Dillahunt,E,market
+Vincent Laford,D,market
+Amee Peltier,B,direction
+Fredia Brock,D,direction
+Raleigh Perez,E,statement
+Doloris Yager,B,heir
+Stormy Clatterbuck,B,heir
+Vernon Gatts,D,heir
+Hayden Show,B,market
+Annie Delorme,D,direction
+Zenaida Kisling,D,heir
+Christene Coache,C,direction
+Leisha Hodak,E,absorption
+Nan Croft,A,absorption
+Elyse Smyre,B,direction
+Alix Pick,B,absorption
+Dallas Mohney,A,absorption
+Ora Dangerfield,E,absorption
+Pamila Hardin,D,absorption
+Eloy Watt,C,direction
+Diedra Lighty,A,market
+Bert Hanline,D,heir
+Darlene Shalash,A,absorption
+Houston Gowins,D,market
+Margart Grignon,B,heir`,
+`Name,Class
+,`
+]
+
 function split(objSize, noOfGroups) {
     let division = Math.floor(objSize / noOfGroups)
     let remainder = objSize % noOfGroups
@@ -85,6 +141,7 @@ function fillConfigDropdown(config) {
             config = $('#select-config')
             $('#div-config').css('display', 'block')
             $('#div-after-csv').css('display', 'none')
+            $('#file-upload').css('display', 'none')
         }
         let n = 0
         selectable = []
@@ -141,6 +198,7 @@ function newConfigDropdown(obj) {
 
 function parseGroupings() {
     let objs = $.csv.toObjects(csvData)
+    let editObjs = objs;
     let arrays = $.csv.toArrays(csvData)
     const noOfGroups = parseInt($('#no-of-group').val())
     let limitations = {}
@@ -156,11 +214,13 @@ function parseGroupings() {
         }
     }
     let groups = Array.from({length: noOfGroups}, e => [])
+    let doneObjs = []
     
     for (i of Object.keys(limitations)) {
         for (j of limitations[i]) {
-            let toSort = shuffleArray(objs.filter(x => {return x[i] == j}))
-            let splitVal = split(toSort.length, noOfGroups)
+            let toSort = shuffleArray(editObjs.filter(x => {return x[i] == j}))
+            doneObjs = doneObjs.concat(toSort)
+            let splitVal = split(doneObjs.length, noOfGroups)
 
             let group = 0
             for (i of toSort) {
@@ -171,14 +231,15 @@ function parseGroupings() {
                     group += 1
                 }
             }
+            editObjs = editObjs.filter(x => {return x.group === undefined})
         }
     }
 
-    let others = shuffleArray(objs.filter(x => {return x.group === undefined}))
+    editObjs = shuffleArray(editObjs)
 
     let splitVal = split(objs.length, noOfGroups)
     let group = 0
-    for (i of others) {
+    for (i of editObjs) {
         groups[group].push(i)
         i.group = group + 1
 
@@ -390,4 +451,20 @@ function parseFileUpload(file) {
     reader.onerror = function() {
         alert('Unable to read ' + file.fileName)
     }
+}
+
+function example(index) {
+    let data = $.csv.toArrays(examples[index])
+
+    data[0].unshift('No.')
+
+    let n = 1
+    let v = data.splice(1)
+    for (i of v) {
+        i.unshift(n)
+        n += 1
+    }
+    let newarr = data.concat(v)
+    csvData = $.csv.fromArrays(newarr)
+    loadDataTable()
 }
