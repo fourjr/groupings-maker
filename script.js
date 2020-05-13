@@ -44,11 +44,40 @@ function download(filename, text) {
 
 function fillConfigDropdown(config) {
     if (csvData) {
-        let arrays = $.csv.toArrays(csvData).filter(i => i[0] && i[1])
+        let arrays = $.csv.toArrays(csvData)
+
+        // sanitise data
+        let set = new Set(arrays[0])
+        if (set.size != arrays[0].length) {
+            alert('Headers must have unique values')
+            return
+        }
+        if (set.has('')) {
+            alert('Headers cannot be empty')
+            return
+        }
+
+        arrays = arrays.filter(i => i[1] && i[2]) //remove those without name and class
+        //remove extra columns
+        let arrLength = arrays[0].length
+        let deletedColumns = 0
+        for (let i = 0; i < arrLength; i++) {
+            let set = new Set(arrays.map(x => x[i - deletedColumns]))
+            if (set.has('') && set.size == 2) {
+                for(k of arrays) {
+                    k.splice(i - deletedColumns, 1)
+                }
+                deletedColumns += 1
+            }
+        }
+
         let table = $('#data-table')
         drawTable(arrays, table, true)
         updateFromTable()
-        for (i of $('.data-table-row')) {i.setAttribute('contenteditable', 'false')}
+
+        for (i of $('.data-table-row')) {
+            i.setAttribute('contenteditable', 'false'
+        )}
 
         let headers = arrays[0]
 
@@ -60,7 +89,7 @@ function fillConfigDropdown(config) {
         let n = 0
         selectable = []
         for (i of headers) {
-            if (i.toLowerCase() != 'name' && i.toLowerCase() != 'class') {
+            if (i.toLowerCase() != 'name' && i.toLowerCase() != 'class' && i.toLowerCase() != 'no.') {
                 selectable.push([i, n])
             }
             n += 1
@@ -158,17 +187,20 @@ function parseGroupings() {
         }
     }
 
-    arrays[0].push('Group')
+    let groupIndex = arrays[0].push('Group') -1
     let v = arrays.splice(1).map((x, n) => {
         x.push(objs[n].group)
         return x
     })
-    v.sort((a, b) => a[2] > b[2]) // cca
-    v.sort((a, b) => a[3] > b[3]) // board
-    v.sort((a, b) => a[4] > b[4]) // group
+    v.sort((a, b) => a[groupIndex] > b[groupIndex]) // group
 
     let n = 1
+    let prevGroup = 0;
     for (i of v) {
+        if (prevGroup != i[groupIndex]) {
+            n = 1
+            prevGroup = i[groupIndex]
+        }
         i[0] = n
         n += 1
     }
@@ -184,7 +216,8 @@ function parseGroupings() {
 function loadDataTable() {
     $('#div-after-csv').css('display', 'block')
     let table = $('#data-table')
-    drawTable($.csv.toArrays(csvData), table, true)
+    let array = $.csv.toArrays(csvData)
+    drawTable(array, table, true)
 }
 
 function updateFromTable() {
@@ -196,7 +229,17 @@ function updateFromTable() {
         }
         data.push(arr)
     }
+    let set = new Set(data[0])
+    if (set.size != data[0].length) {
+        alert('Headers must have unique values')
+    }
+    if (set.has('')) {
+        alert('Headers cannot be empty')
+    }
     csvData = $.csv.fromArrays(data)
+
+
+    fillRemoveColumnDropdown()
 }
 
 function addRow() {
@@ -239,11 +282,49 @@ function removeRow() {
     }
 }
 
+function addColumn() {
+    let data = $.csv.toArrays(csvData)
+    let title = $('#add-column').val()
+    if (title) {
+        if (data[0].includes(title)) {
+            alert('Header has to be unique')
+        }
+        else {
+            for (i of data) {
+                i.push('')
+            }
+            data[0][data[0].length - 1] = title
+
+            let table = $('#data-table')
+            drawTable(data, table, true)
+            updateFromTable()
+        }
+    }
+    else {
+        alert('Include name of header')
+    }
+}
+
+function removeColumn() {
+    let data = $.csv.toArrays(csvData)
+    let index = data[0].indexOf($('#remove-column').val())
+    if (index > 0 && index < data[0].length) {
+        for (i of data) {
+            i.splice(index, 1)
+        }
+
+        let table = $('#data-table')
+        drawTable(data, table, true)
+        updateFromTable()
+    }
+}
+
 function drawTable(array, table, editable) {
     let header = true
     table.html('')
     for (i of array) {
         let row = $('<tr>')
+        let n = 0
         for (j of i) {
             let col
             if (header) {
@@ -253,15 +334,34 @@ function drawTable(array, table, editable) {
                 col = $('<td>')
             }
             if (editable) {
-                col.attr('contenteditable', 'true')
+                if (!((header && (j.toLowerCase() == 'No.' || j.toLowerCase() == 'name' || j.toLowerCase() == 'class')) || n == 0)) {
+                    col.attr('contenteditable', 'true')
+                }
                 col.attr('class', 'data-table-row')
                 col.attr('onkeyup', 'updateFromTable()')
             }
             col.text(j)
             row.append(col)
+            n += 1
         }
         table.append(row)
         header = false
+    }
+    
+    if (editable) {
+        fillRemoveColumnDropdown()
+    }
+}
+
+function fillRemoveColumnDropdown() {
+    let array = $.csv.toArrays(csvData)
+    let select = $('#remove-column')
+    select.html('')
+    select.text('')
+    for(i of array[0].splice(3)) {
+        let option = $('<option>')
+        option.html(i)
+        select.append(option)
     }
 }
 
@@ -271,16 +371,21 @@ function parseFileUpload(file) {
     reader.readAsText(file)
     reader.onload = function(event) {
         let data = $.csv.toArrays(event.target.result)
-        data[0].unshift('No.')
-        let n = 1
-        let v = data.splice(1)
-        for (i of v) {
-            i.unshift(n)
-            n += 1
+        if (data[0].includes('Name') && data[0].includes('Class')) {
+            data[0].unshift('No.')
+            let n = 1
+            let v = data.splice(1)
+            for (i of v) {
+                i.unshift(n)
+                n += 1
+            }
+            let newarr = data.concat(v)
+            csvData = $.csv.fromArrays(newarr)
+            loadDataTable()
         }
-        let newarr = data.concat(v)
-        csvData = $.csv.fromArrays(newarr)
-        loadDataTable()
+        else {
+            alert('File must have headers "Name" and "Class"')
+        }
     }
     reader.onerror = function() {
         alert('Unable to read ' + file.fileName)
